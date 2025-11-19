@@ -1,28 +1,31 @@
 import express from "express";
 import TelegramBot from "node-telegram-bot-api";
 
-const token = "7895342756:AAHG8ypCUj81Ye1SP7-_CKeVi2GKwnZNtJE";
-const bot = new TelegramBot(token, { polling: true });
+const TOKEN = process.env.BOT_TOKEN;
+const URL = process.env.RENDER_EXTERNAL_URL;
 
 const app = express();
+app.use(express.json());
 
-// پاسخ به /start
-bot.onText(/\/start/, (msg) => {
-  bot.sendMessage(
-    msg.chat.id,
-    "سلام ✨\nمن ربات هوشمند چارتر123 هستم.\nهر سوالی درباره پرواز، بلیط، قیمت‌ها یا مشاوره داری بپرس!"
-  );
+// ایجاد ربات بدون polling
+const bot = new TelegramBot(TOKEN);
+
+// تنظیم وبهوک
+bot.setWebHook(`${URL}/bot${TOKEN}`);
+
+app.post(`/bot${TOKEN}`, (req, res) => {
+  bot.processUpdate(req.body);
+  res.sendStatus(200);
 });
 
-// پاسخ به پیام‌های عادی
-bot.on("message", (msg) => {
-  if (msg.text === "/start") return;
-  bot.sendMessage(msg.chat.id, "پیامت رسید 👌 در حال پردازش هستم...");
+// پیام ساده برای تست
+bot.on("message", msg => {
+  bot.sendMessage(msg.chat.id, "ربات آنلاین و فعال است ✔️");
 });
 
-// سرور برای Render
 app.get("/", (req, res) => {
-  res.send("Bot is running");
+  res.send("Bot is running...");
 });
 
-app.listen(3000, () => console.log("Server running on port 3000"));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log("Server started on port", PORT));
